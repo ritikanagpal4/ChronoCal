@@ -1,0 +1,19 @@
+{
+  "name": "chronocal",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@langchain/core": "^1.1.40",
+    "@langchain/groq": "^1.2.0",
+    "@langchain/langgraph": "^1.2.8",
+    "@langchain/tavily": "^1.2.0",
+    "groq-sdk": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
