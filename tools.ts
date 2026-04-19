@@ -14,7 +14,7 @@ auth.setCredentials(tokens);
 const calendar = google.calendar({ version: 'v3', auth });
 
 export const createEventTool = tool(
-  async ({ query, timeMin, timeMax }) => {
+  async ({ query, timeMin, timeMax, attendees }) => {
     const event = {
       summary: query,
       start: {
@@ -25,11 +25,22 @@ export const createEventTool = tool(
         dateTime: timeMax,
         timeZone: 'UTC',
       },
+      attendees,
+      conferenceData: {
+        createRequest: {
+          requestId: `meet-${Date.now()}`,
+          conferenceSolutionKey: {
+            type: 'hangoutsMeet',
+          },
+        },
+      },
     };
 
     await calendar.events.insert({
       calendarId: 'primary',
       requestBody: event,
+      sendNotifications: true,
+      sendUpdates: 'all',
     });
 
     return 'The meeting has been created';
@@ -41,6 +52,9 @@ export const createEventTool = tool(
         query: z.string().describe("A natural language description of the event to create in google calendar. For example, 'Create a meeting with John tomorrow at 3pm' or 'Schedule a dentist appointment for next Monday at 10am'"),
         timeMin: z.string().describe("The minimum start time of the events to retrieve in UTC format."),
         timeMax: z.string().describe("The maximum end time of the events to retrieve in UTC format."),
+        attendees: z.array(z.object({
+            email: z.string().describe("The email of the attendee to invite to the event.")
+        })).optional().describe("An optional list of attendees to invite to the event, each with an email field."),
     }),
   })
 
