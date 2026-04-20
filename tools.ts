@@ -1,4 +1,5 @@
 import { tool } from "@langchain/core/tools";
+import { TavilySearch } from "@langchain/tavily";
 import { google } from "googleapis";
 import { z } from "zod";
 
@@ -89,3 +90,68 @@ export const createEventTool = tool(
       timeMax: z.string().optional().describe("The end time to retrieve events until in ISO 8601 format (e.g., 2024-04-20T23:59:59). Optional. Will be interpreted in your current timezone."),
     }),
   })
+
+  export const updateEventTool = tool(
+    async ({ eventId, query, timeMin, timeMax, attendees }) => {
+      const currentTimeZone = getTimeZone();
+      const event = {
+        summary: query,
+        start: {
+          dateTime: timeMin,
+          timeZone: currentTimeZone,
+        },
+        end: {
+          dateTime: timeMax,
+          timeZone: currentTimeZone,
+        },
+        attendees,
+      };
+
+      await calendar.events.update({
+        calendarId: 'primary',
+        eventId,
+        requestBody: event,
+        conferenceDataVersion: 1,
+        sendNotifications: true,
+        sendUpdates: 'all',
+      });
+
+      return 'The meeting has been updated';
+    },
+    {
+      name: 'update-event',
+      description: "Use this tool to update calendar events based on a query. The query will be a natural language description of the updates you want to make to the event. The tool should return a message indicating that the event has been updated  successfully.",
+      schema: z.object({
+          eventId: z.string().describe("The ID of the event to update."),
+          query: z.string().describe("A natural language description of the updates to make to the event in google calendar. For example, 'Change the meeting with John tomorrow to 4pm' or 'Reschedule my dentist appointment for next Tuesday at 11am'"),
+          timeMin: z.string().describe("The new start time of the event in ISO 8601 format (e.g., 2024-04-20T15:00:00). Will be interpreted in your current timezone."),
+          timeMax: z.string().describe("The new end time of the event in ISO 8601 format (e.g., 2024-04-20T16:00:00). Will be interpreted in your current timezone."),
+          attendees: z.array(z.object({
+              email: z.string().describe("The email of the attendee to invite to the event.")
+          })).optional().describe("An optional list of attendees to invite to the event, each with an email field."),
+      }),
+    });
+
+export const search = new TavilySearch({
+  maxResults: 3,
+  topic: "general",
+}); 
+
+export const cancelEventTool = tool(
+  async ({ eventId }) => {
+    await calendar.events.delete({
+      calendarId: 'primary',
+      eventId,
+      sendNotifications: true,
+      sendUpdates: 'all',
+    });
+
+    return 'The meeting has been cancelled';
+  },
+  {
+    name: 'cancel-event',
+    description: "Use this tool to cancel calendar events based on a query. The query will be a natural language description of the event you want to cancel. The tool should return a message indicating that the event has been cancelled successfully.",
+    schema: z.object({
+        eventId: z.string().describe("The ID of the event to cancel."),
+    }),
+  });   

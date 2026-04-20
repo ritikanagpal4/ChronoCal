@@ -1,12 +1,11 @@
 import { ChatGroq } from "@langchain/groq";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { createEventTool, getEventsTool } from "./tools";
+import { cancelEventTool, createEventTool, getEventsTool, search, updateEventTool } from "./tools";
 import { END, MemorySaver, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import type { AIMessage } from "@langchain/core/messages";
 import readline from "node:readline/promises";
-import { content } from "googleapis/build/src/apis/content";
 
-const tools = [createEventTool, getEventsTool];
+const tools = [createEventTool, getEventsTool, updateEventTool, search, cancelEventTool];
 const toolNode = new ToolNode(tools);
 
 const model = new ChatGroq({
@@ -18,15 +17,12 @@ const model = new ChatGroq({
 async function callModel(state: typeof MessagesAnnotation.State) {
     console.log("Invoking model with messages");
     const response = await model.invoke(state.messages);
-    // console.log("Model response:", response);
     return {messages: [response]};
 } 
 
 function shouldContinue(state: typeof MessagesAnnotation.State) {
     const lastMessage = state.messages[state.messages.length - 1] as AIMessage | undefined;
-    // console.log("Checking if we should continue. Last message:", lastMessage);
     if (!lastMessage) return "__end__";
-    // Check if the model's last message contains tool calls
     if (lastMessage.tool_calls && lastMessage.tool_calls.length > 0) {
         return "tools";
     }
@@ -76,7 +72,6 @@ async function main() {
     }
 
     rl.close();
-    // await saveGraphStateAsImage(app, "./customGraph.png");
 }
 
 main();
