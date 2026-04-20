@@ -4,6 +4,7 @@ import { createEventTool, getEventsTool } from "./tools";
 import { END, MemorySaver, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import type { AIMessage } from "@langchain/core/messages";
 import readline from "node:readline/promises";
+import { content } from "googleapis/build/src/apis/content";
 
 const tools = [createEventTool, getEventsTool];
 const toolNode = new ToolNode(tools);
@@ -49,9 +50,10 @@ const app = graph.compile({checkpointer: memorySaver});
 async function main() {
 
     const config = { configurable : { thread_id: 'conversation-num-1'}};
-
+    const currentDate = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+    const timezoneString = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const initialState = {
-        messages: [{role: "user", content: ""}],
+        messages: [{role: "system", content: `Current date and time: ${currentDate}, Timezone: ${timezoneString}`},{role: "user", content: ""}],
     };
 
     const rl = readline.createInterface({
