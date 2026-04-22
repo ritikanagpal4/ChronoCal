@@ -35,7 +35,9 @@ bun install
 
 ### 2. Environment Configuration
 
-Create a `.env` file with the following variables:
+#### Step 1: Set Up Google OAuth2 Credentials
+
+Create a `.env` file with your Google Calendar API credentials:
 
 ```bash
 # Groq API
@@ -45,19 +47,65 @@ GROQ_API_KEY=your_groq_api_key_here
 GOOGLE_CLIENT_ID=your_client_id
 GOOGLE_CLIENT_SECRET=your_client_secret
 GOOGLE_REDIRECT_URL=http://localhost:3000/callback
+```
 
-# Google OAuth2 Tokens
-GOOGLE_ACCESS_TOKEN=your_access_token
-GOOGLE_REFRESH_TOKEN=your_refresh_token
+#### Step 2: Generate Google OAuth2 Tokens
+
+You need to generate access and refresh tokens. Follow these steps:
+
+1. **Start the OAuth2 server**:
+   ```bash
+   bun run server.ts
+   ```
+   The server will start and display a Google authentication URL in the terminal.
+
+2. **Open the callback UI**:
+   - Open your browser and navigate to the URL shown in the terminal
+   - This will take you to Google's login page
+   - Sign in with your Google account
+   - Grant permission for Calendar API access
+   - You'll be redirected to the callback page
+
+3. **Copy the tokens**:
+   - After successful authentication, check the terminal output
+   - You'll see two tokens:
+     - `Access Token`: Copy this value
+     - `Refresh Token`: Copy this value
+
+4. **Add tokens to `.env`**:
+   ```bash
+   # Google OAuth2 Tokens (from server.ts output)
+   GOOGLE_ACCESS_TOKEN=paste_your_access_token_here
+   GOOGLE_REFRESH_TOKEN=paste_your_refresh_token_here
+   ```
+
+#### Complete `.env` Example
+
+```bash
+# Groq API
+GROQ_API_KEY=gsk_xxxxxxxxxxxxx
+
+# Google Calendar API
+GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxx
+GOOGLE_REDIRECT_URL=http://localhost:3000/callback
+
+# Google OAuth2 Tokens (generated from server.ts)
+GOOGLE_ACCESS_TOKEN=ya29.xxxxxxxxxxxxx
+GOOGLE_REFRESH_TOKEN=1//xxxxxxxxxxxxx
 ```
 
 See `.env.example` for a template.
 
 ### 3. Run the Agent
 
+Once your `.env` is configured with all tokens, run the calendar agent:
+
 ```bash
 bun run index.ts
 ```
+
+You can now interact with the agent using natural language commands!
 
 ## 💬 Usage Examples
 
@@ -114,6 +162,7 @@ Agent: The dentist appointment has been cancelled.
 ```
 ChronoCal/
 ├── index.ts                    # Main agent orchestration & CLI
+├── server.ts                   # OAuth2 callback server (for token generation)
 ├── tools.ts                    # Calendar tools & API integration
 ├── package.json                # Dependencies
 ├── tsconfig.json               # TypeScript configuration
@@ -216,6 +265,24 @@ bun run index.ts
 ```
 
 ## 🐛 Troubleshooting
+
+### OAuth2 Token Generation Issues
+
+**Problem**: Server won't start or callback fails
+- Ensure `server.ts` is in the project root
+- Check that `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correct
+- Verify `GOOGLE_REDIRECT_URL` matches your Google OAuth2 app settings
+- Make sure port 3000 is not in use
+
+**Problem**: Tokens not appearing in terminal after callback
+- Check browser console for errors
+- Ensure you've granted Calendar API permissions
+- Verify the callback URL in the browser matches your configuration
+
+**Problem**: Invalid tokens in `.env`
+- Make sure you copied the **entire** token value
+- Tokens may contain special characters like `+` and `/` - keep them as is
+- Don't add quotes around the token values unless the token itself contains spaces
 
 ### Google Meet Link Not Generated
 See [GOOGLE_MEET_FIX.md](./GOOGLE_MEET_FIX.md) - requires `conferenceDataVersion: 1`
